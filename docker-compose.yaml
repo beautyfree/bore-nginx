@@ -1,29 +1,29 @@
 services:
-    bore-nginx:
-        image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
-        environment:
-            - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
-            - DNS_RESOLVER=${DNS_RESOLVER:-8.8.8.8}
-        ports:
-            - ${NGINX_PORT:-8080}:80
-            - ${BORE_PORT:-7835}:7835
-        restart: always
-        depends_on:
-            - bore-server
-        networks:
-            - dokploy-network
+  bore-nginx:
+    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
+    environment:
+      - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
+      - DNS_RESOLVER=${DNS_RESOLVER:-8.8.8.8}
+    ports:
+      - ${NGINX_PORT:-8081}:80
+      - ${BORE_PORT:-7835}:7835
+    restart: always
+    depends_on:
+      - bore-server
+    networks:
+      - dokploy-network
 
-    bore-server:
-        image: ekzhang/bore
-        restart: always
-        init: true
-        command: server
-        environment:
-            - BORE_SECRET=${BORE_SECRET}
-            - BORE_MIN_PORT=${BORE_MIN_PORT:-7000}
-            - BORE_MAX_PORT=${BORE_MAX_PORT:-8000}
-        networks:
-            - dokploy-network
+  bore-server:
+    image: ekzhang/bore
+    restart: always
+    init: true
+    command: server
+    environment:
+      - BORE_SECRET=${BORE_SECRET}
+      - BORE_MIN_PORT=${BORE_MIN_PORT:-7000}
+      - BORE_MAX_PORT=${BORE_MAX_PORT:-8000}
+    networks:
+      - dokploy-network
 
 networks:
   dokploy-network:
