@@ -1,18 +1,10 @@
 networks:
     bore:
-        name: bore
         driver: bridge
-        ipam:
-            driver: default
-            config:
-                - subnet: "192.168.0.0/24"
-                  gateway: "192.168.0.1"
 
 services:
-
     bore-nginx:
-        image: likesistemas/bore-server:latest
-        build: ./nginx/
+        image: ghcr.io/${GITHUB_REPOSITORY:-username/repo-name}/bore-nginx:latest
         environment:
             - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
             - DNS_RESOLVER=${DNS_RESOLVER:-127.0.0.11}
@@ -24,13 +16,13 @@ services:
             - bore
 
     bore-server:
-        build:
-            context: ./bore/
-            target: server
+        image: ekzhang/bore
         restart: always
+        init: true
+        command: server
         environment:
             - BORE_SECRET=${BORE_SECRET}
-            - BORE_MIN_PORT=${BORE_MIN_PORT:-1024}
-            - BORE_MAX_PORT=${BORE_MAX_PORT:-65535}
+            - BORE_MIN_PORT=${BORE_MIN_PORT:-7000}
+            - BORE_MAX_PORT=${BORE_MAX_PORT:-8000}
         networks:
             - bore

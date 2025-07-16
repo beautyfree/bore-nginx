@@ -6,7 +6,6 @@ RUN apk update --no-cache \
     && wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin \
     && apk del wget
 
-ENV BORE_HOST="bore-server"
 COPY default.conf /etc/nginx/conf.d/default.tpl
 COPY bore-server.conf /etc/nginx/bore-server.tpl
 COPY change-host.sh /docker-entrypoint.d/00-change-host.sh
