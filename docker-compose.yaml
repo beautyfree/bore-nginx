@@ -12,6 +12,12 @@ services:
       - bore-server
     networks:
       - dokploy-network
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.bore-nginx.rule=Host(`bore.tacticlaunch.com`)'
+      - 'traefik.http.routers.bore-nginx.tls=true'
+      - 'traefik.http.routers.bore-nginx.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.bore-nginx.loadbalancer.server.port=80'
 
   bore-server:
     image: ekzhang/bore
