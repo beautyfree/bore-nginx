@@ -1,9 +1,10 @@
 services:
   bore-nginx:
-    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
+    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:0.0.5
     environment:
       - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
       - DNS_RESOLVER=${DNS_RESOLVER:-127.0.0.11}
+      - BORE_DOMAIN=${BORE_DOMAIN:-bore.tacticlaunch.com}
     ports:
       - ${NGINX_PORT:-8081}:80
       - ${BORE_PORT:-7835}:7835
@@ -14,11 +15,11 @@ services:
       - dokploy-network
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.bore-nginx.rule=HostRegexp(`{subdomain:[0-9]+}.bore.tacticlaunch.com`)'
+      - 'traefik.http.routers.bore-nginx.rule=HostRegexp(`{port:[0-9]+}.${BORE_DOMAIN:-bore.tacticlaunch.com}`)'
       - 'traefik.http.routers.bore-nginx.tls=true'
       - 'traefik.http.routers.bore-nginx.tls.certresolver=letsencrypt'
-      - 'traefik.http.routers.bore-nginx.tls.domains[0].main=bore.tacticlaunch.com'
-      - 'traefik.http.routers.bore-nginx.tls.domains[0].sans=*.bore.tacticlaunch.com'
+      - 'traefik.http.routers.bore-nginx.tls.domains[0].main=${BORE_DOMAIN:-bore.tacticlaunch.com}'
+      - 'traefik.http.routers.bore-nginx.tls.domains[0].sans=*.${BORE_DOMAIN:-bore.tacticlaunch.com}'
       - 'traefik.http.services.bore-nginx.loadbalancer.server.port=80'
 
   bore-server:
