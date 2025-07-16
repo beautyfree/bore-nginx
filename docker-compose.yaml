@@ -1,6 +1,6 @@
 services:
   bore-nginx:
-    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:0.0.5
+    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
     environment:
       - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
       - DNS_RESOLVER=${DNS_RESOLVER:-127.0.0.11}
