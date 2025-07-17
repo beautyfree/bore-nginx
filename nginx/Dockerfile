@@ -3,12 +3,12 @@ FROM nginx:alpine
 # Install curl for health check
 RUN apk add --no-cache curl
 
-# Optimize nginx for high performance
+# Optimize nginx for high performance and multiple connections
 RUN sed -i '/worker_processes/c\worker_processes auto;' /etc/nginx/nginx.conf && \
     sed -i '/events {/a\    worker_connections 4096;\n    use epoll;\n    multi_accept on;' /etc/nginx/nginx.conf && \
     sed -i '/http {/a\    sendfile on;\n    tcp_nopush on;\n    tcp_nodelay on;\n    keepalive_timeout 65;\n    keepalive_requests 1000;\n    client_max_body_size 100m;\n    client_body_buffer_size 128k;\n    client_header_buffer_size 32k;\n    large_client_header_buffers 4 32k;' /etc/nginx/nginx.conf
 
-# Create optimized nginx configuration inline
+# Create optimized nginx configuration for dev server
 RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
 server {
     listen 80;
@@ -23,20 +23,27 @@ server {
         set $upstream_port $port;
         proxy_pass http://$upstream_host:$upstream_port;
         
-        # High performance proxy settings for large files
+        # Optimized for multiple concurrent requests (no caching for dev)
         proxy_buffering on;
         proxy_buffer_size 128k;
         proxy_buffers 8 128k;
         proxy_busy_buffers_size 256k;
-        proxy_temp_file_write_size 256k;
-        proxy_max_temp_file_size 0;
         
-        # Connection optimizations
-        proxy_connect_timeout 5s;
-        proxy_send_timeout 300s;
-        proxy_read_timeout 300s;
+        # Fast connection settings
+        proxy_connect_timeout 3s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # HTTP/1.1 keep-alive for connection reuse
         proxy_http_version 1.1;
         proxy_set_header Connection "";
+        
+        # Disable caching for dev environment
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
         
         # Headers
         proxy_set_header Host $host;
@@ -44,9 +51,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         
-        # Performance tweaks
-        proxy_intercept_errors off;
+        # Performance tweaks for multiple requests
         proxy_request_buffering off;
+        proxy_intercept_errors off;
     }
 }
 
