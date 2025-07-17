@@ -17,6 +17,17 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+
+# Fallback server for debugging
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location / {
+        return 200 "Debug: Host=$host, Server=$server_name, URI=$request_uri\n";
+        add_header Content-Type text/plain;
+    }
+}
 EOF
 
 # Basic health check

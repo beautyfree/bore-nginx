@@ -6,7 +6,7 @@ services:
       - dokploy-network
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.bore-router.rule=HostRegexp(`{port:[0-9]+}.bore.tacticlaunch.com`)'
+      - 'traefik.http.routers.bore-router.rule=Host(`7991.bore.tacticlaunch.com`)'
       - 'traefik.http.routers.bore-router.tls=true'
       - 'traefik.http.routers.bore-router.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.bore-router.tls.domains[0].main=bore.tacticlaunch.com'
