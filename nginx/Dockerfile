@@ -12,3 +12,8 @@ COPY change-host.sh /docker-entrypoint.d/00-change-host.sh
 RUN chmod +x /docker-entrypoint.d/00-change-host.sh
 
 RUN echo "include /etc/nginx/bore-server.conf;" >> /etc/nginx/nginx.conf
+
+# Performance optimizations
+RUN sed -i 's/worker_processes auto;/worker_processes auto;\nworker_rlimit_nofile 65535;/' /etc/nginx/nginx.conf && \
+    sed -i '/worker_processes/a worker_connections 4096;\nuse epoll;\nmulti_accept on;' /etc/nginx/nginx.conf && \
+    sed -i '/http {/a \    sendfile on;\n    tcp_nopush on;\n    tcp_nodelay on;\n    keepalive_timeout 30;\n    keepalive_requests 1000;\n    reset_timedout_connection on;\n    client_body_timeout 10;\n    send_timeout 2;\n    client_header_timeout 10;\n    client_max_body_size 100m;' /etc/nginx/nginx.conf
