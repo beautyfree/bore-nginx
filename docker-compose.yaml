@@ -1,26 +1,17 @@
 services:
-  bore-nginx:
+  bore-router:
     image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
-    environment:
-      - BORE_HOST=${BORE_SERVER_HOST:-bore-server}
-      - DNS_RESOLVER=${DNS_RESOLVER:-127.0.0.11}
-      - BORE_DOMAIN=${BORE_DOMAIN:-bore.tacticlaunch.com}
-    ports:
-      - ${NGINX_PORT:-8081}:80
-      - ${BORE_PORT:-7835}:7835
     restart: always
-    depends_on:
-      - bore-server
     networks:
       - dokploy-network
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.bore-nginx.rule=HostRegexp(`{port:[0-9]+}.${BORE_DOMAIN:-bore.tacticlaunch.com}`)'
-      - 'traefik.http.routers.bore-nginx.tls=true'
-      - 'traefik.http.routers.bore-nginx.tls.certresolver=letsencrypt'
-      - 'traefik.http.routers.bore-nginx.tls.domains[0].main=${BORE_DOMAIN:-bore.tacticlaunch.com}'
-      - 'traefik.http.routers.bore-nginx.tls.domains[0].sans=*.${BORE_DOMAIN:-bore.tacticlaunch.com}'
-      - 'traefik.http.services.bore-nginx.loadbalancer.server.port=80'
+      - 'traefik.http.routers.bore-router.rule=HostRegexp(`{port:[0-9]+}.bore.tacticlaunch.com`)'
+      - 'traefik.http.routers.bore-router.tls=true'
+      - 'traefik.http.routers.bore-router.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.bore-router.tls.domains[0].main=bore.tacticlaunch.com'
+      - 'traefik.http.routers.bore-router.tls.domains[0].sans=*.bore.tacticlaunch.com'
+      - 'traefik.http.services.bore-router.loadbalancer.server.port=80'
 
   bore-server:
     image: ekzhang/bore
@@ -28,9 +19,11 @@ services:
     init: true
     command: server
     environment:
-      - BORE_SECRET=${BORE_SECRET}
+      # - BORE_SECRET=${BORE_SECRET}  # Отключено для простоты
       - BORE_MIN_PORT=${BORE_MIN_PORT:-7000}
       - BORE_MAX_PORT=${BORE_MAX_PORT:-8000}
+    ports:
+      - '7835:7835' # Control port для bore client подключений
     networks:
       - dokploy-network
 
