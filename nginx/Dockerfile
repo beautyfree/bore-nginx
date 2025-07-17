@@ -1,19 +1,45 @@
 FROM nginx:alpine
 
-ENV DOCKERIZE_VERSION v0.8.0
-RUN apk update --no-cache \
-    && apk add --no-cache wget openssl netcat-openbsd \
-    && wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin \
-    && apk del wget
+# Install curl for health check
+RUN apk add --no-cache curl
 
-COPY default.conf /etc/nginx/conf.d/default.tpl
-COPY bore-server.conf /etc/nginx/bore-server.tpl
-COPY change-host.sh /docker-entrypoint.d/00-change-host.sh
-RUN chmod +x /docker-entrypoint.d/00-change-host.sh
+# Create minimal nginx configuration inline
+RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+server {
+    listen 80;
+    server_name ~^(?<port>\d+)\.(?<domain>.+)$;
+    
+    # DNS resolver for dynamic upstream
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    resolver_timeout 5s;
 
-RUN echo "include /etc/nginx/bore-server.conf;" >> /etc/nginx/nginx.conf
+    location / {
+        set $upstream_host bore-server;
+        set $upstream_port $port;
+        proxy_pass http://$upstream_host:$upstream_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
 
-# Performance optimizations
-RUN sed -i 's/worker_processes auto;/worker_processes auto;\nworker_rlimit_nofile 65535;/' /etc/nginx/nginx.conf && \
-    sed -i '/events {/a \    worker_connections 4096;\n    use epoll;\n    multi_accept on;' /etc/nginx/nginx.conf && \
-    sed -i '/http {/a \    sendfile on;\n    tcp_nopush on;\n    tcp_nodelay on;\n    keepalive_timeout 30;\n    keepalive_requests 1000;\n    reset_timedout_connection on;\n    client_body_timeout 10;\n    send_timeout 2;\n    client_header_timeout 10;\n    client_max_body_size 100m;' /etc/nginx/nginx.conf
+# Fallback server for debugging
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location / {
+        return 200 "Debug: Host=$host, Server=$server_name, URI=$request_uri\n";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+
+# Basic health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

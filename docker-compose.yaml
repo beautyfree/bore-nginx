@@ -1,12 +1,12 @@
 services:
   bore-router:
-    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:latest
+    image: ghcr.io/beautyfree/bore-nginx/bore-nginx:0.0.14
     restart: always
     networks:
       - dokploy-network
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.bore-router.rule=Host(`7991.bore.tacticlaunch.com`)'
+      - 'traefik.http.routers.bore-router.rule=HostRegexp(`^.+\.bore\.tacticlaunch\.com$`)'
       - 'traefik.http.routers.bore-router.tls=true'
       - 'traefik.http.routers.bore-router.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.bore-router.tls.domains[0].main=bore.tacticlaunch.com'
@@ -19,11 +19,11 @@ services:
     init: true
     command: server
     environment:
-      # - BORE_SECRET=${BORE_SECRET}  # Отключено для простоты
+      - BORE_SECRET=${BORE_SECRET}
       - BORE_MIN_PORT=${BORE_MIN_PORT:-7000}
       - BORE_MAX_PORT=${BORE_MAX_PORT:-8000}
     ports:
-      - '7835:7835' # Control port для bore client подключений
+      - '7835:7835'
     networks:
       - dokploy-network
 
